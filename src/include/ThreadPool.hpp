@@ -1,13 +1,6 @@
 #pragma once
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <functional>
-#include <algorithm>
 
+#include "stdHeaders.hpp"
 #include "WorkingThread.hpp"
 
 class ThreadPool {

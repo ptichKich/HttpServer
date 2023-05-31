@@ -1,8 +1,5 @@
 #pragma once
 
-#include <atomic>
-#include <memory>
-
 template <typename T> class NonBlockingQueue {
     // using unsigned to allow legal wrap around
     struct CellTy {
