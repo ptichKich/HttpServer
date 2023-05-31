@@ -1,3 +1,0 @@
-/home/kich/CLionProjects/SimpleHttpServer/cmake-build-debug-gcc/CMakeFiles/SimpleHttpServer.dir
-/home/kich/CLionProjects/SimpleHttpServer/cmake-build-debug-gcc/CMakeFiles/edit_cache.dir
-/home/kich/CLionProjects/SimpleHttpServer/cmake-build-debug-gcc/CMakeFiles/rebuild_cache.dir

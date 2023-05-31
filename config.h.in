@@ -1,0 +1,1 @@
+#cmakedefine HTML_DIR "@HTML_DIR@"
