@@ -9,5 +9,4 @@ set(CMAKE_CXX_FLAGS  "-pthread -std=gnu++20")
 set(HTML_DIR ${CMAKE_SOURCE_DIR}/src/html)
 set(CMAKE_INCLUDE_PATH "${CMAKE_INCLUDE_PATH} ${CMAKE_SOURCE_DIR}/src/include")
 configure_file(config.h.in config.h)
-add_executable(SimpleHttpServer src/main.cpp src/include/HttpServer.hpp src/include/Request.hpp src/include/ThreadPool.hpp src/include/WorkingThread.hpp src/include/NonBlockingQueue.hpp src/include/linuxHeaders.hpp src/include/stdHeaders.hpp config.h src/WorkingThread.cpp)
-
+add_executable(SimpleHttpServer sources/src/main.cpp sources/include/HttpServer.hpp sources/include/Request.hpp sources/include/ThreadPool.hpp sources/include/WorkingThread.hpp sources/include/NonBlockingQueue.hpp sources/include/linuxHeaders.hpp sources/include/stdHeaders.hpp config.h sources/src/WorkingThread.cpp sources/src/HttpServer.cpp sources/include/GenericServerIface.hpp sources/src/Request.cpp sources/src/ThreadPool.cpp)

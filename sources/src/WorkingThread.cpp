@@ -1,7 +1,7 @@
-#include "include/linuxHeaders.hpp"
-#include "include/stdHeaders.hpp"
-#include "include/WorkingThread.hpp"
-#include "include/Request.hpp"
+#include "../include/linuxHeaders.hpp"
+#include "../include/stdHeaders.hpp"
+#include "../include/WorkingThread.hpp"
+#include "../include/Request.hpp"
 
 WorkingThread::WorkingThread(): fdQueue(1 << 13) {
 
@@ -108,6 +108,7 @@ void WorkingThread::handleSocketEvent(int fd, uint32_t events) {
     if ((events & EPOLLIN)) {
         Request request(fd, epollFd, *this);
         request.handleRequest();
+        return;
     }
 }
 

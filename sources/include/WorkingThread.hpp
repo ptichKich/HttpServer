@@ -1,8 +1,9 @@
 #pragma once
 
+#include <thread>
+#include <iostream>
 #include "linuxHeaders.hpp"
 #include "NonBlockingQueue.hpp"
-//#include "Request.hpp"
 
 
 class WorkingThread {

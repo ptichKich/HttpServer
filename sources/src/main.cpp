@@ -1,5 +1,6 @@
 #include <csignal>
-#include "include/HttpServer.hpp"
+#include "../include/stdHeaders.hpp"
+#include "../include/HttpServer.hpp"
 
 
 HttpServer server(60000);
@@ -22,7 +23,7 @@ int main() {
 //        }
 //    });
 //    thr.detach();
-    server.Run();
+    server.run();
 
     return 0;
 }

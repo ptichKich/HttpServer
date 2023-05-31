@@ -1,4 +1,6 @@
 #pragma once
+#include <atomic>
+#include <vector>
 
 template <typename T> class NonBlockingQueue {
     // using unsigned to allow legal wrap around
