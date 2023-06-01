@@ -18,7 +18,7 @@ public:
 
     std::vector<std::string> parseRequestBody(std::string&& request);
 
-    void handleGetRequest(std::string&& path);
+    void handleGetRequest(const std::string& path, const std::string& hostHeaderBegin);
 
     void sendResponse(std::string&& response);
 

@@ -33,7 +33,6 @@ WorkingThread::~WorkingThread() {
     if (epollFd != -1) {
         close(epollFd);
     }
-    //TODO: implement all operations to safely close all descriptors
 }
 
 void WorkingThread::start() {
@@ -62,7 +61,7 @@ void WorkingThread::start() {
                     }
 
                     epoll_event event{};
-                    event.events = EPOLLIN;
+                    event.events = EPOLLIN | EPOLLHUP;
                     event.data.fd = fd;
 
                     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &event) == -1) {
@@ -101,6 +100,11 @@ void WorkingThread::addConnection(int fd) {
 
 void WorkingThread::handleSocketEvent(int fd, uint32_t events) {
     if (events & EPOLLHUP) {
+        int result = epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, 0);
+        if (result == -1) {
+            std::cerr << "Error removing fd from epoll: " << strerror(errno) << std::endl;
+        }
+        decrementConnectionsCount();
         close(fd);
         return;
     }

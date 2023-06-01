@@ -1,5 +1,25 @@
 #include "../include/Request.hpp"
 
+static std::string okResponseGetFileContent = "<!DOCTYPE html>\n"
+                                    "<html>\n"
+                                    "<head>\n"
+                                    "    <title>Web page example</title>\n"
+                                    "</head>\n"
+                                    "<body>\n"
+                                    "\n"
+                                    "<h1>Web page example</h1>\n"
+                                    "\n"
+                                    "<form>\n"
+                                    "    <label for=\"inputField\">Enter the text:</label>\n"
+                                    "    <input type=\"text\" id=\"inputField\" name=\"inputField\">\n"
+                                    "    <br><br>\n"
+                                    "    <input type=\"submit\" value=\"Send\">\n"
+                                    "</form>\n"
+                                    "\n"
+                                    "</body>\n"
+                                    "</html>\n";
+
+
 Request::Request(int clientFd, int epollFd, WorkingThread &thr) :
             workingThreadRef(thr), clientFd(clientFd), epollFd(epollFd) {
 }
@@ -11,12 +31,14 @@ void Request::handleRequest() {
     if (!requestContent.empty()) {
         std::string firstLine = requestContent[0];
         std::istringstream issFirstLine(firstLine);
-        std::string method;
-        std::string path;
+        std::string method, path, hostHeaderBegin;
         issFirstLine >> method >> path;
 
+        std::istringstream issSecondLine(requestContent[1]);
+        issSecondLine >> hostHeaderBegin;
+
         if (method == "GET") {
-            handleGetRequest(std::move(path));
+            handleGetRequest(path, hostHeaderBegin);
         }
     }
 }
@@ -55,46 +77,35 @@ std::vector<std::string> Request::parseRequestBody(std::string &&request) {
     return lines;
 }
 
-void Request::handleGetRequest(std::string &&path) {
+void Request::handleGetRequest(const std::string &path, const std::string& hostHeaderBegin) {
     std::ostringstream response;
     std::ostringstream ossResponseFileContent;
 
-//        if (path == "/index.html") {
-//            std::ifstream file("../html/index.html");
-//            if (file) {
-//                ossResponseFileContent << file.rdbuf();
-//            }
-//        }
+    if (hostHeaderBegin != "Host:") {
+        response << "HTTP/1.1 400 Bad Request\r\n";
+        response << "Content-Type: text/plain\r\n";
+        response << "Content-Length: 11\r\n";
+        response << "\r\n\r\n";
+        response << "Bad Request\n";
 
+        sendResponse(response.str());
+    } else if (path != "/index.html") {
+        response << "HTTP/1.1 404 Not Found\r\n";
+        response << "Content-Type: text/plain\r\n";
+        response << "Content-Length: 11\r\n";
+        response << "\r\n\r\n";
+        response << "Not Found\n";
 
-    //std::string responseFileContent(ossResponseFileContent.str());
+        sendResponse(response.str());
+    } else {
+        response << "HTTP/1.1 200 OK\r\n";
+        response << "Content-Type: text/html\r\n";
+        response << "Content-Length: " << okResponseGetFileContent.size() << "\r\n";
+        response << "\r\n\r\n";
+        response << okResponseGetFileContent;
 
-    std::string responseFileContent = "<!DOCTYPE html>\n"
-                                      "<html>\n"
-                                      "<head>\n"
-                                      "    <title>Web page example</title>\n"
-                                      "</head>\n"
-                                      "<body>\n"
-                                      "\n"
-                                      "<h1>Web page example</h1>\n"
-                                      "\n"
-                                      "<form>\n"
-                                      "    <label for=\"inputField\">Enter the text:</label>\n"
-                                      "    <input type=\"text\" id=\"inputField\" name=\"inputField\">\n"
-                                      "    <br><br>\n"
-                                      "    <input type=\"submit\" value=\"Send\">\n"
-                                      "</form>\n"
-                                      "\n"
-                                      "</body>\n"
-                                      "</html>\n";
-
-    response << "HTTP/1.1 200 OK\r\n";
-    response << "Content-Type: text/html\r\n";
-    response << "Content-Length: " << responseFileContent.size() << "\r\n";
-    response << "\r\n\r\n";
-    response << responseFileContent;
-
-    sendResponse(response.str());
+        sendResponse(response.str());
+    }
 }
 
 void Request::sendResponse(std::string &&response) {

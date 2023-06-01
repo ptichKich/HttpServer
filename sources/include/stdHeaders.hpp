@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cassert>
 #include <condition_variable>
+#include <csignal>
 #include <cstdlib>
 #include <cstdint>
 #include <cstring>
