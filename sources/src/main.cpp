@@ -16,14 +16,6 @@ void signalHandler(int signal) {
 int main() {
 
     std::signal(SIGINT, signalHandler);
-//    std::thread thr([](){
-//        std::signal(SIGINT, signalHandler);
-//        while(true) {
-//            std::this_thread::sleep_for(std::chrono::seconds(1));
-//        }
-//    });
-//    thr.detach();
-    server.run();
 
     return 0;
 }

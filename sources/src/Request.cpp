@@ -19,6 +19,21 @@ static std::string okResponseGetFileContent = "<!DOCTYPE html>\n"
                                     "</body>\n"
                                     "</html>\n";
 
+static std::string okResponsePostContent = "<!DOCTYPE html>\n"
+                                           "<html>\n"
+                                           "<head>\n"
+                                           "    <title>Greetings</title>\n"
+                                           "</head>\n"
+                                           "<body>\n"
+                                           "    <h1 id=\"greeting\"></h1>\n"
+                                           "\n"
+                                           "    <script>\n"
+                                           "        var greeting = \"greetingStr\"\n"
+                                           "        document.getElementById(\"greeting\").innerText = greeting;\n"
+                                           "    </script>\n"
+                                           "</body>\n"
+                                           "</html>";
+
 
 Request::Request(int clientFd, int epollFd, WorkingThread &thr) :
             workingThreadRef(thr), clientFd(clientFd), epollFd(epollFd) {
@@ -40,6 +55,10 @@ void Request::handleRequest() {
         if (method == "GET") {
             handleGetRequest(path, hostHeaderBegin);
         }
+
+        if (method == "POST") {
+            handlePostRequest(requestContent);
+        }
     }
 }
 
@@ -54,12 +73,7 @@ std::string Request::getRequestBody() {
     }
 
     if (bytesRead == 0) {
-        int result = epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, 0);
-        if (result == -1) {
-            std::cerr << "Error removing fd from epoll" << std::endl;
-        }
-        close(clientFd);
-        workingThreadRef.decrementConnectionsCount();
+        deleteFdFromEpollAndClose();
     }
 
     return request;
@@ -79,7 +93,6 @@ std::vector<std::string> Request::parseRequestBody(std::string &&request) {
 
 void Request::handleGetRequest(const std::string &path, const std::string& hostHeaderBegin) {
     std::ostringstream response;
-    std::ostringstream ossResponseFileContent;
 
     if (hostHeaderBegin != "Host:") {
         response << "HTTP/1.1 400 Bad Request\r\n";
@@ -108,10 +121,69 @@ void Request::handleGetRequest(const std::string &path, const std::string& hostH
     }
 }
 
-void Request::sendResponse(std::string &&response) {
-    //TODO send in async way
-    ssize_t sentBytes = send(clientFd, response.c_str(), response.length(), 0);
-    if (sentBytes < 0) {
-        std::cerr << "Error sending response" << std::endl;
+void Request::handlePostRequest(const std::vector<std::string> &requestContent) {
+    auto extractJsonValue = [&](const std::string& jsonStr, const std::string& key) -> std::string {
+        std::string searchString = "\"" + key + "\":\"";
+        size_t pos = jsonStr.find(searchString);
+        if (pos != std::string::npos) {
+            pos += searchString.length();
+            size_t endPos = jsonStr.find("\"", pos);
+            if (endPos != std::string::npos) {
+                std::string value = jsonStr.substr(pos, endPos - pos);
+                return value;
+            }
+        }
+        return "";
+    };
+
+    const std::string& jsonContent = requestContent.back();
+    auto name = extractJsonValue(jsonContent, "username");
+    auto ageString = extractJsonValue(jsonContent, "age");
+
+    std::string greeting = "\"Hello, " + name + ", now I know your age is " + ageString + "\"";
+    std::ostringstream response;
+
+    response << "HTTP/1.1 200 OK\r\n";
+    response << "Content-Type: text/html\r\n";
+
+    static std::string greetingStr("\"greetingStr\"");
+    auto okResponsePostContentCopy = okResponsePostContent;
+    auto pos = okResponsePostContentCopy.find(greetingStr);
+
+    if (pos != std::string::npos) {
+        okResponsePostContentCopy.replace(pos, greetingStr.length(), greeting);
+    } else {
+        std::cout << "Something went wrong replacing string \n";
+        exit(1);
     }
+
+
+    response << "Content-Length: " << okResponsePostContentCopy.size() << "\r\n";
+    response << "\r\n\r\n";
+    response << okResponsePostContentCopy;
+
+    sendResponse(response.str());
+}
+
+void Request::sendResponse(std::string &&response) {
+    ssize_t totalSent = 0;
+    ssize_t dataSize = response.size();
+
+    while (totalSent < dataSize) {
+        ssize_t bytesSent = send(clientFd, response.c_str() + totalSent, dataSize - totalSent, 0);
+        if (bytesSent == -1) {
+            std::cerr << "Error during data send." << std::endl;
+            exit(1);
+        }
+        totalSent += bytesSent;
+    }
+}
+
+void Request::deleteFdFromEpollAndClose() {
+    int result = epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, 0);
+    if (result == -1) {
+        std::cerr << "Error removing fd from epoll" << std::endl;
+    }
+    close(clientFd);
+    workingThreadRef.decrementConnectionsCount();
 }

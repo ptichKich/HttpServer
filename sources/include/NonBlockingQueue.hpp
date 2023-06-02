@@ -3,7 +3,6 @@
 #include <vector>
 
 template <typename T> class NonBlockingQueue {
-    // using unsigned to allow legal wrap around
     struct CellTy {
         std::atomic<unsigned> Sequence;
         T Data;
@@ -51,24 +50,18 @@ public:
         bool Res = false;
 
         while (!Res) {
-            // fetch the current Position where to enqueue the item
             Pos = EnqueuePos.load();
             Cell = &Buffer[Pos & BufferMask];
             auto Seq = Cell->Sequence.load();
             auto Diff = static_cast<int>(Seq) - static_cast<int>(Pos);
 
-            // queue is full we cannot enqueue and just return false
-            // another option: queue moved forward all way round
             if (Diff < 0)
                 return false;
 
-            // If its Sequence wasn't touched by other producers
-            // check if we can increment the enqueue Position
             if (Diff == 0)
                 Res = EnqueuePos.compare_exchange_weak(Pos, Pos + 1);
         }
 
-        // write the item we want to enqueue and bump Sequence
         Cell->Data = std::move(Data);
         Cell->Sequence.store(Pos + 1);
         return true;
@@ -80,23 +73,18 @@ public:
         bool Res = false;
 
         while (!Res) {
-            // fetch the current Position from where we can dequeue an item
             Pos = DequeuePos.load();
             Cell = &Buffer[Pos & BufferMask];
             auto Seq = Cell->Sequence.load();
             auto Diff = static_cast<int>(Seq) - static_cast<int>(Pos + 1);
 
-            // probably the queue is empty, then return false
             if (Diff < 0)
                 return false;
 
-            // Check if its Sequence was changed by a producer and wasn't changed by
-            // other consumers and if we can increment the dequeue Position
             if (Diff == 0)
                 Res = DequeuePos.compare_exchange_weak(Pos, Pos + 1);
         }
 
-        // read the item and update for the next round of the buffer
         Data = std::move(Cell->Data);
         Cell->Sequence.store(Pos + BufferMask + 1);
         return true;

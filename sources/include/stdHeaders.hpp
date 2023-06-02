@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <queue>
 #include <string>
