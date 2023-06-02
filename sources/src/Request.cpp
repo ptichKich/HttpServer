@@ -1,23 +1,15 @@
 #include "../include/Request.hpp"
 
 static std::string okResponseGetFileContent = "<!DOCTYPE html>\n"
-                                    "<html>\n"
-                                    "<head>\n"
-                                    "    <title>Web page example</title>\n"
-                                    "</head>\n"
-                                    "<body>\n"
-                                    "\n"
-                                    "<h1>Web page example</h1>\n"
-                                    "\n"
-                                    "<form>\n"
-                                    "    <label for=\"inputField\">Enter the text:</label>\n"
-                                    "    <input type=\"text\" id=\"inputField\" name=\"inputField\">\n"
-                                    "    <br><br>\n"
-                                    "    <input type=\"submit\" value=\"Send\">\n"
-                                    "</form>\n"
-                                    "\n"
-                                    "</body>\n"
-                                    "</html>\n";
+                                              "<html>\n"
+                                              "<head>\n"
+                                              "  <title>Greeting Page</title>\n"
+                                              "</head>\n"
+                                              "<body>\n"
+                                              "  <h1>Hello, username. Introduce yourself</h1>\n"
+                                              "  <p>...</p>\n"
+                                              "</body>\n"
+                                              "</html>";
 
 static std::string okResponsePostContent = "<!DOCTYPE html>\n"
                                            "<html>\n"
@@ -154,6 +146,7 @@ void Request::handlePostRequest(const std::vector<std::string> &requestContent) 
         okResponsePostContentCopy.replace(pos, greetingStr.length(), greeting);
     } else {
         std::cout << "Something went wrong replacing string \n";
+        deleteFdFromEpollAndClose();
         exit(1);
     }
 
@@ -173,6 +166,7 @@ void Request::sendResponse(std::string &&response) {
         ssize_t bytesSent = send(clientFd, response.c_str() + totalSent, dataSize - totalSent, 0);
         if (bytesSent == -1) {
             std::cerr << "Error during data send." << std::endl;
+            deleteFdFromEpollAndClose();
             exit(1);
         }
         totalSent += bytesSent;

@@ -1,9 +1,8 @@
-#include <csignal>
 #include "../include/stdHeaders.hpp"
 #include "../include/HttpServer.hpp"
 
-
-HttpServer server(60000);
+static constexpr int port = 60000;
+HttpServer server(port);
 
 void signalHandler(int signal) {
     if (signal == SIGINT) {
@@ -14,8 +13,8 @@ void signalHandler(int signal) {
 }
 
 int main() {
-
     std::signal(SIGINT, signalHandler);
+    server.run();
 
     return 0;
 }
