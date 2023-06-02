@@ -65,7 +65,7 @@ void WorkingThread::start() {
                     event.data.fd = fd;
 
                     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &event) == -1) {
-                        // TODO: write smth reasonable std::cerr << "Error: " << strerror(errno) << std::endl;
+                        std::cerr << "Error adding socket to epoll: " << strerror(errno) << std::endl;
                         close(epollFd);
                         exit(1);
                     }

@@ -158,7 +158,7 @@ private:
         if (numEvents == -1) {
             std::cerr << "Error epoll wait: " << strerror(errno) << std::endl;
             clearResources();
-            exit(1);
+            return "";
         }
 
         char buffer[1024];
