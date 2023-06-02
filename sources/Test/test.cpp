@@ -26,7 +26,7 @@ class Test final {
 
    std::ostringstream resultsStream;
 public:
-    Test() {
+    Test(): rd(), generator(rd()), distribution(1,100) {
         sockFd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockFd == -1) {
             std::cerr << "Error creating client";
@@ -74,8 +74,29 @@ public:
     }
 
     void run() {
+        performCorrectGetRequest();
+        performBadRequest();
+        performCorrectPostRequest();
+        performNotFoundRequest();
+    }
+
+    std::string getResults() {
+        return resultsStream.str();
+    }
+private:
+    std::random_device rd;
+    std::mt19937 generator;
+    std::uniform_int_distribution<int> distribution;
+
+private:
+    std::chrono::milliseconds getRandomDuration() {
+        return std::chrono::milliseconds(distribution(generator));
+    }
+
+    void performCorrectGetRequest() {
+
         for (int i=0; i<100; ++i) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(getRandomDuration());
             sendCorrectGetRequest();
             auto response = waitForResponse();
 
@@ -83,9 +104,11 @@ public:
         }
 
         resultsStream << std::this_thread::get_id() << " TEST checking (200 OK) for GET passed" << std::endl;
+    }
 
+    void performBadRequest() {
         for (int i=0; i<100; ++i) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(getRandomDuration());
             sendIncorrectGetRequest();
             auto response = waitForResponse();
 
@@ -93,9 +116,11 @@ public:
         }
 
         resultsStream << std::this_thread::get_id() << " Test checking (400 Bad Request) passed" << std::endl;
+    }
 
+    void performCorrectPostRequest() {
         for (int i=0; i<100; ++i) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(getRandomDuration());
             sendCorrectPostRequest();
             auto response = waitForResponse();
 
@@ -103,9 +128,11 @@ public:
         }
 
         resultsStream << std::this_thread::get_id() << " TEST checking (200 OK) for POST passed" << std::endl;
+    }
 
+    void performNotFoundRequest() {
         for (int i=0; i<100; ++i) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(getRandomDuration());
             sendNotFoundGetRequest();
             auto response = waitForResponse();
 
@@ -115,11 +142,6 @@ public:
         resultsStream << std::this_thread::get_id() << " TEST checking (404 Not Found) for GET passed" << std::endl;
     }
 
-    std::string getResults() {
-        return resultsStream.str();
-    }
-
-private:
     void sendCorrectGetRequest() {
         if (send(sockFd, correctGetRequestText.c_str(), correctGetRequestText.size(), 0) == -1) {
             std::cerr << "Error sending correct GET request " << strerror(errno) << std::endl;
